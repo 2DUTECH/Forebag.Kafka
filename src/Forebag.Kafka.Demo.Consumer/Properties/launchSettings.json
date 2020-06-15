@@ -1,0 +1,10 @@
+﻿{
+  "profiles": {
+    "DostaLab.Kafka.Demo.Worker": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "Development"
+      }
+    }
+  }
+}
