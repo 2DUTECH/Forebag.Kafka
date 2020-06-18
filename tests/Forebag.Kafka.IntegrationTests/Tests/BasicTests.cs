@@ -30,6 +30,9 @@ namespace Forebag.Kafka.IntegrationTests
                 Assert.Equal(2, messageBuffer.GetTopicByName(nameof(TestConsumerBufferConfig.TopicA)).Messages.Count);
                 Assert.Equal(2, messageBuffer.GetTopicByName(nameof(TestConsumerBufferConfig.TopicB1)).Messages.Count);
                 Assert.Equal(2, messageBuffer.GetTopicByName(nameof(TestConsumerBufferConfig.TopicB2)).Messages.Count);
+                Assert.Equal(2, messageBuffer.GetTopicByName(nameof(TestConsumerBufferConfig.TopicC1)).Messages.Count);
+                Assert.Equal(2, messageBuffer.GetTopicByName(nameof(TestConsumerBufferConfig.TopicC2)).Messages.Count);
+                Assert.Equal(2, messageBuffer.GetTopicByName(nameof(TestConsumerBufferConfig.TopicC3)).Messages.Count);
             }
             catch (Exception ex)
             {
@@ -69,6 +72,21 @@ namespace Forebag.Kafka.IntegrationTests
 
             Assert.NotNull(consumeResultB2);
             Assert.Equal(testMessage.Message, consumeResultB2.Message);
+
+            var consumeResultC1 = await messageBuffer.TryConsumeFromC1(testKey, cancellationToken);
+
+            Assert.NotNull(consumeResultC1);
+            Assert.Equal(testMessage.Message, consumeResultC1.Message);
+
+            var consumeResultC2 = await messageBuffer.TryConsumeFromC2(testKey, cancellationToken);
+
+            Assert.NotNull(consumeResultC2);
+            Assert.Equal(testMessage.Message, consumeResultC2.Message);
+
+            var consumeResultC3 = await messageBuffer.TryConsumeFromC3(testKey, cancellationToken);
+
+            Assert.NotNull(consumeResultC3);
+            Assert.Equal(testMessage.Message, consumeResultC3.Message);
         }
     }
 }

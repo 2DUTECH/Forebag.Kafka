@@ -58,6 +58,9 @@ namespace Forebag.Kafka.IntegrationTests
                     services.Configure<MultipleTopicConsumerBackgroundServiceConfig>(
                         _configuration!.GetSection(nameof(MultipleTopicConsumer)));
 
+                    services.Configure<StringTypedConsumerBackgroundServiceConfig>(
+                        _configuration!.GetSection(nameof(StringTypedConsumer)));
+
                     services.Configure<TestConsumerBufferConfig>(
                         _configuration!.GetSection(nameof(TestConsumerBuffer)));
 
@@ -76,6 +79,7 @@ namespace Forebag.Kafka.IntegrationTests
 
                     services.AddHostedService<SingleTopicConsumer>();
                     services.AddHostedService<MultipleTopicConsumer>();
+                    services.AddHostedService<StringTypedConsumer>();
                 });
 
         public void Dispose()

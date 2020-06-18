@@ -18,6 +18,9 @@ namespace Forebag.Kafka.IntegrationTests
             _topics.AddOrUpdate(_config.TopicA!, new MessageBuffer(), (topicName, MessageBuffer) => MessageBuffer);
             _topics.AddOrUpdate(_config.TopicB1!, new MessageBuffer(), (topicName, MessageBuffer) => MessageBuffer);
             _topics.AddOrUpdate(_config.TopicB2!, new MessageBuffer(), (topicName, MessageBuffer) => MessageBuffer);
+            _topics.AddOrUpdate(_config.TopicC1!, new MessageBuffer(), (topicName, MessageBuffer) => MessageBuffer);
+            _topics.AddOrUpdate(_config.TopicC2!, new MessageBuffer(), (topicName, MessageBuffer) => MessageBuffer);
+            _topics.AddOrUpdate(_config.TopicC3!, new MessageBuffer(), (topicName, MessageBuffer) => MessageBuffer);
         }
 
         public MessageBuffer GetTopicByName(string topicName)
@@ -39,6 +42,15 @@ namespace Forebag.Kafka.IntegrationTests
 
         public async Task<TestKafkaMessage> TryConsumeFromB2(string key, CancellationToken cancellationToken) =>
             await GetTopicByName(_config.TopicB2!).TryConsume(key, cancellationToken);
+
+        public async Task<TestKafkaMessage> TryConsumeFromC1(string key, CancellationToken cancellationToken) =>
+            await GetTopicByName(_config.TopicC1!).TryConsume(key, cancellationToken);
+
+        public async Task<TestKafkaMessage> TryConsumeFromC2(string key, CancellationToken cancellationToken) =>
+            await GetTopicByName(_config.TopicC2!).TryConsume(key, cancellationToken);
+
+        public async Task<TestKafkaMessage> TryConsumeFromC3(string key, CancellationToken cancellationToken) =>
+            await GetTopicByName(_config.TopicC3!).TryConsume(key, cancellationToken);
 
         public class MessageBuffer
         {
