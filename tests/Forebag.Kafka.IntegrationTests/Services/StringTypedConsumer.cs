@@ -5,17 +5,17 @@ using System.Threading.Tasks;
 
 namespace Forebag.Kafka.IntegrationTests
 {
-    public class StringTypedConsumer : StringTypedConsumerBackgroundService
+    public class StringTypedConsumer : Kafka.StringTypedConsumer
     {
-        private readonly StringTypedConsumerBackgroundServiceConfig _config;
+        private readonly StringTypedConsumerOptions _options;
         private readonly TestConsumerBuffer _buffer;
 
         public StringTypedConsumer(
             TestConsumerBuffer buffer,
-            IOptions<StringTypedConsumerBackgroundServiceConfig> config,
+            IOptions<StringTypedConsumerOptions> options,
             ILogger<StringTypedConsumer> logger) : base(logger)
         {
-            _config = config.Value;
+            _options = options.Value;
             _buffer = buffer;
         }
 
@@ -26,6 +26,6 @@ namespace Forebag.Kafka.IntegrationTests
             return Task.CompletedTask;
         }
 
-        protected override (ConsumerConfig? ConsumerConfig, string[]? TopicsForRead) BuildParameters() => (_config, _config.TopicsForConsume);
+        protected override StringTypedConsumerOptions BuildOptions() => _options;
     }
 }

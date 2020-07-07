@@ -1,8 +1,6 @@
-using Confluent.Kafka;
-
 namespace Forebag.Kafka.IntegrationTests
 {
-    public class MultipleTopicProducerConfig : ProducerConfig
+    public class MultipleTopicProducerConfig : ProducerOptions
     {
         public string[]? TopicsForMultipleTopicConsumer { get; set; }
     }

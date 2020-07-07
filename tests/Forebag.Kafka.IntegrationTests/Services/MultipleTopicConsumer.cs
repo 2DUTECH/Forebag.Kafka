@@ -5,17 +5,17 @@ using System.Threading.Tasks;
 
 namespace Forebag.Kafka.IntegrationTests
 {
-    public class MultipleTopicConsumer : MultipleTopicConsumerBackgroundService<TestKafkaMessage>
+    public class MultipleTopicConsumer : MultipleTopicConsumer<TestKafkaMessage>
     {
-        private readonly MultipleTopicConsumerBackgroundServiceConfig _config;
+        private readonly MultipleTopicConsumerOptions _options;
         private readonly TestConsumerBuffer _buffer;
 
         public MultipleTopicConsumer(
             TestConsumerBuffer buffer,
-            IOptions<MultipleTopicConsumerBackgroundServiceConfig> config,
+            IOptions<MultipleTopicConsumerOptions> options,
             ILogger<MultipleTopicConsumer> logger) : base(logger)
         {
-            _config = config.Value;
+            _options = options.Value;
             _buffer = buffer;
         }
 
@@ -26,6 +26,6 @@ namespace Forebag.Kafka.IntegrationTests
             return Task.CompletedTask;
         }
 
-        protected override MultipleTopicConsumerBackgroundServiceConfig BuildConfig() => _config;
+        protected override MultipleTopicConsumerOptions BuildOptions() => _options;
     }
 }

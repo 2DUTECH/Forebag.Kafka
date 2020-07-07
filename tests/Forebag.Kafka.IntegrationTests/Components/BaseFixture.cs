@@ -52,13 +52,13 @@ namespace Forebag.Kafka.IntegrationTests
                     services.Configure<MultipleTopicProducerConfig>(
                         _configuration!.GetSection(nameof(MultipleTopicProducer)));
 
-                    services.Configure<SingleTopicConsumerBackgroundServiceConfig>(
+                    services.Configure<SingleTopicConsumerOptions>(
                         _configuration!.GetSection(nameof(SingleTopicConsumer)));
 
-                    services.Configure<MultipleTopicConsumerBackgroundServiceConfig>(
+                    services.Configure<MultipleTopicConsumerOptions>(
                         _configuration!.GetSection(nameof(MultipleTopicConsumer)));
 
-                    services.Configure<StringTypedConsumerBackgroundServiceConfig>(
+                    services.Configure<StringTypedConsumerOptions>(
                         _configuration!.GetSection(nameof(StringTypedConsumer)));
 
                     services.Configure<TestConsumerBufferConfig>(

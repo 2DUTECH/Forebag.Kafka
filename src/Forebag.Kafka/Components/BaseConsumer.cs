@@ -1,6 +1,7 @@
-using Confluent.Kafka;
+﻿using Confluent.Kafka;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using System;
 using System.Linq;
 using System.Threading;
@@ -8,13 +9,13 @@ using System.Threading.Tasks;
 
 namespace Forebag.Kafka
 {
-    public abstract class StringTypedConsumerBackgroundService : BackgroundService
+    public abstract class BaseConsumer<T> : BackgroundService
     {
-        private readonly ILogger<StringTypedConsumerBackgroundService> _logger;
+        private readonly ILogger<BaseConsumer<T>> _logger;
         private IConsumer<string, string>? _consumer;
         private string[]? _topicsForSubsciption;
 
-        protected StringTypedConsumerBackgroundService(ILogger<StringTypedConsumerBackgroundService> logger) => _logger = logger;
+        protected BaseConsumer(ILogger<BaseConsumer<T>> logger) => _logger = logger;
 
         /// <summary>
         /// Метод для инициализации сервиса.
@@ -66,9 +67,11 @@ namespace Forebag.Kafka
 
                         try
                         {
+                            var value = JsonConvert.DeserializeObject<T>(consumeResult.Value);
+
                             _logger.LogConsume(_consumer, consumeResult.Key, consumeResult.Value, consumeResult.TopicPartitionOffset);
 
-                            await ProcessMessage(consumeResult.Key, consumeResult.Value, consumeResult.TopicPartitionOffset);
+                            await ProcessMessage(consumeResult.Key, value, consumeResult.TopicPartitionOffset);
                         }
                         catch (Exception ex)
                         {
@@ -100,7 +103,7 @@ namespace Forebag.Kafka
         /// <param name="key">Ключ сообщения.</param>
         /// <param name="value">Экземпляр сообщения.</param>
         /// <param name="offset">Оффсет полученного сообщения.</param>
-        public abstract Task ProcessMessage(string key, string value, TopicPartitionOffset offset);
+        public abstract Task ProcessMessage(string key, T value, TopicPartitionOffset offset);
 
         /// <summary>
         /// Коммит сообщений для текущего консьюмера.

@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace Forebag.Kafka.Demo.Consumer
 {
-    public class CreateUserCommandConsumer : SingleTopicConsumerBackgroundService<CreateUserCommand>
+    public class CreateUserCommandConsumer : SingleTopicConsumer<CreateUserCommand>
     {
         public CreateUserCommandConsumer(ILogger<CreateUserCommandConsumer> logger)
             : base(logger)
@@ -16,8 +16,8 @@ namespace Forebag.Kafka.Demo.Consumer
             return Task.CompletedTask;
         }
 
-        protected override SingleTopicConsumerBackgroundServiceConfig BuildConfig()
-            => new SingleTopicConsumerBackgroundServiceConfig
+        protected override SingleTopicConsumerOptions BuildOptions()
+            => new SingleTopicConsumerOptions
             {
                 GroupId = "create_user_service",
                 BootstrapServers = "localhost:29092",
