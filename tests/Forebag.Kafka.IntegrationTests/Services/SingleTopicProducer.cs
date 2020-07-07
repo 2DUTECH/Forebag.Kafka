@@ -1,21 +1,22 @@
 ﻿using Confluent.Kafka;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using System.Threading.Tasks;
 
 namespace Forebag.Kafka.IntegrationTests
 {
-    public class SingleTopicProducer : KafkaProducer
+    public class SingleTopicProducer : Producer
     {
-        private readonly SingleTopicProducerConfig _config;
+        private readonly SingleTopicProducerConfig _options;
 
         public SingleTopicProducer(
-            SingleTopicProducerConfig config,
-            ILogger<SingleTopicProducer> logger) : base(config, logger)
+            IOptions<SingleTopicProducerConfig> options,
+            ILogger<SingleTopicProducer> logger) : base(options, logger)
         {
-            _config = config;
+            _options = options.Value;
         }
 
         public async Task<TopicPartitionOffset> Produce<T>(string key, T value)
-            => await Produce(key, value, _config.TopicForSingleTopicConsumer!);
+            => await Produce(key, value, _options.TopicForSingleTopicConsumer!);
     }
 }

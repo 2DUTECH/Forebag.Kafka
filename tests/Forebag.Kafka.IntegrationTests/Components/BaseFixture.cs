@@ -66,16 +66,8 @@ namespace Forebag.Kafka.IntegrationTests
 
                     // Services: 
                     services.AddSingleton<TestConsumerBuffer>();
-
-                    services.AddSingleton(serviceProvider =>
-                        new SingleTopicProducer(
-                            serviceProvider.GetService<IOptions<SingleTopicProducerConfig>>().Value,
-                            serviceProvider.GetService<ILogger<SingleTopicProducer>>()));
-
-                    services.AddSingleton(serviceProvider =>
-                        new MultipleTopicProducer(
-                            serviceProvider.GetService<IOptions<MultipleTopicProducerConfig>>().Value,
-                            serviceProvider.GetService<ILogger<MultipleTopicProducer>>()));
+                    services.AddSingleton<SingleTopicProducer>();
+                    services.AddSingleton<MultipleTopicProducer>();
 
                     services.AddHostedService<SingleTopicConsumer>();
                     services.AddHostedService<MultipleTopicConsumer>();

@@ -1,5 +1,7 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using System;
 using System.Threading.Tasks;
 
@@ -9,8 +11,22 @@ namespace Forebag.Kafka.Demo.Producer
     {
         public static async Task Main(string[] args)
         {
-            var logger = GetLogger();
-            using var producer = new KafkaProducer(new Confluent.Kafka.ProducerConfig { BootstrapServers = "localhost:29092" }, logger);
+            var serviceCollection = new ServiceCollection();
+
+            serviceCollection.AddLogging(c => c.AddConsole());
+
+            ConfigurationBuilder builder = new ConfigurationBuilder();
+
+            builder.AddJsonFile("appsettings.json");
+
+            IConfiguration configuration = builder.Build();
+
+            serviceCollection.Configure<ProducerOptions>(configuration.GetSection(nameof(Producer)));
+
+            serviceCollection.AddSingleton<Kafka.Producer>();
+
+            using var serviceProvider = serviceCollection.BuildServiceProvider();
+            using var producer = serviceProvider.GetService<Kafka.Producer>();
 
             while (true)
             {
@@ -31,15 +47,6 @@ namespace Forebag.Kafka.Demo.Producer
 
                 Console.ReadKey();
             }
-        }
-
-        private static ILogger<KafkaProducer> GetLogger()
-        {
-            var serviceCollection = new ServiceCollection();
-            serviceCollection.AddLogging(c => c.AddConsole());
-            var serviceProvider = serviceCollection.BuildServiceProvider();
-
-            return serviceProvider.GetService<ILogger<KafkaProducer>>();
         }
     }
 }
