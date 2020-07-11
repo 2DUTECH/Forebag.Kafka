@@ -12,6 +12,7 @@ namespace Forebag.Kafka
     /// </remarks>
     public abstract class SingleTopicConsumer<T> : BaseConsumer<T>
     {
+        /// <inheritdoc/>
         protected SingleTopicConsumer(ILogger<SingleTopicConsumer<T>> logger)
             : base(logger) { }
 
@@ -21,6 +22,7 @@ namespace Forebag.Kafka
         /// <returns>Объект конфигурации.</returns>
         protected abstract SingleTopicConsumerOptions BuildOptions();
 
+        /// <inheritdoc/>
         protected sealed override (ConsumerConfig?, string[]?) BuildParameters()
         {
             var config = BuildOptions();

@@ -12,6 +12,7 @@ namespace Forebag.Kafka
     /// </remarks>
     public abstract class MultipleTopicConsumer<T> : BaseConsumer<T>
     {
+        /// <inheritdoc/>
         protected MultipleTopicConsumer(ILogger<MultipleTopicConsumer<T>> logger)
             : base(logger) { }
 
@@ -21,6 +22,7 @@ namespace Forebag.Kafka
         /// <returns>Объект конфигурации.</returns>
         protected abstract MultipleTopicConsumerOptions BuildOptions();
 
+        /// <inheritdoc/>
         protected sealed override (ConsumerConfig?, string[]?) BuildParameters()
         {
             var config = BuildOptions();

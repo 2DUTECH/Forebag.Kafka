@@ -7,6 +7,7 @@ namespace Forebag.Kafka
     /// </summary>
     public class MultipleTopicConsumerOptions : ConsumerConfig
     {
+        /// <inheritdoc/>
         public string[]? TopicsForConsume { get; set; }
     }
 }

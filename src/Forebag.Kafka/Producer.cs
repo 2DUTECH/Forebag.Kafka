@@ -17,10 +17,9 @@ namespace Forebag.Kafka
         private readonly ILogger<Producer> _logger;
         private readonly ProducerOptions _options;
         private readonly Lazy<IProducer<string, string>> _lazyProducer;
-        private bool _disposed = false;
-
         private IProducer<string, string> _producer => _lazyProducer.Value;
 
+        /// <inheritdoc/>
         public Producer(
             IOptions<ProducerOptions> options,
             ILogger<Producer> logger)
@@ -114,29 +113,14 @@ namespace Forebag.Kafka
             }
         }
 
-        ~Producer()
-        {
-            Dispose(false);
-        }
-
+        /// <inheritdoc/>
         public void Dispose()
         {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (_disposed)
-                return;
-
-            if (disposing && _lazyProducer.IsValueCreated)
+            if (_lazyProducer.IsValueCreated)
             {
                 _producer.Flush(TimeSpan.FromMilliseconds(TimeForProduceFlush));
                 _producer.Dispose();
             }
-
-            _disposed = true;
         }
     }
 }

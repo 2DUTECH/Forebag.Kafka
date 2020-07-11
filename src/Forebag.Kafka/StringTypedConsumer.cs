@@ -21,6 +21,7 @@ namespace Forebag.Kafka
         private IConsumer<string, string>? _consumer;
         private string[]? _topicsForSubsciption;
 
+        /// <inheritdoc/>
         protected StringTypedConsumer(ILogger<StringTypedConsumer> logger) => _logger = logger;
 
         /// <summary>
@@ -127,6 +128,7 @@ namespace Forebag.Kafka
             }
         }
 
+        /// <inheritdoc/>
         public override void Dispose()
         {
             base.Dispose();

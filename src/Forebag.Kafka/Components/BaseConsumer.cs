@@ -9,12 +9,14 @@ using System.Threading.Tasks;
 
 namespace Forebag.Kafka
 {
+    /// <inheritdoc/>
     public abstract class BaseConsumer<T> : BackgroundService
     {
         private readonly ILogger<BaseConsumer<T>> _logger;
         private IConsumer<string, string>? _consumer;
         private string[]? _topicsForSubsciption;
 
+        /// <inheritdoc/>
         protected BaseConsumer(ILogger<BaseConsumer<T>> logger) => _logger = logger;
 
         /// <summary>
@@ -123,6 +125,7 @@ namespace Forebag.Kafka
             }
         }
 
+        /// <inheritdoc/>
         public override void Dispose()
         {
             base.Dispose();

@@ -7,6 +7,7 @@ namespace Forebag.Kafka
     /// </summary>
     public class SingleTopicConsumerOptions : ConsumerConfig
     {
+        /// <inheritdoc/>
         public string? TopicForConsume { get; set; }
     }
 }
