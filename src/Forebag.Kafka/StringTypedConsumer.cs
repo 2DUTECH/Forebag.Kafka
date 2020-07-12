@@ -60,46 +60,42 @@ namespace Forebag.Kafka
         /// Метод запускающий работу консьюмера.
         /// </summary>
         /// <param name="stoppingToken">Токен для прерывания работы.</param>
-        protected override Task ExecuteAsync(CancellationToken stoppingToken)
+        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            return Task.Run(async () =>
+            _consumer!.Subscribe(_topicsForSubsciption!);
+
+            try
             {
-                _consumer!.Subscribe(_topicsForSubsciption!);
-
-                try
+                while (!stoppingToken.IsCancellationRequested)
                 {
-                    while (!stoppingToken.IsCancellationRequested)
+                    var consumeResult = _consumer.Consume(stoppingToken);
+
+                    try
                     {
-                        var consumeResult = _consumer.Consume(stoppingToken);
+                        _logger.LogConsume(_consumer, consumeResult.Key, consumeResult.Value, consumeResult.TopicPartitionOffset);
 
-                        try
-                        {
-                            _logger.LogConsume(_consumer, consumeResult.Key, consumeResult.Value, consumeResult.TopicPartitionOffset);
-
-                            await ProcessMessage(consumeResult.Key, consumeResult.Value, consumeResult.TopicPartitionOffset);
-                        }
-                        catch (Exception ex)
-                        {
-                            _logger.LogProcessMessageError(_consumer, consumeResult.Key, consumeResult.Value, consumeResult.TopicPartitionOffset, ex);
-                        }
-
-                        Commit(consumeResult.TopicPartitionOffset);
+                        await ProcessMessage(consumeResult.Key, consumeResult.Value, consumeResult.TopicPartitionOffset);
                     }
-                }
-                catch (OperationCanceledException)
-                {
-                    _logger.LogInformation($"The consumer was stopped by cancellation token.");
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogConsumeError(_consumer, ex);
-                }
-                finally
-                {
-                    _consumer.Unsubscribe();
-                }
+                    catch (Exception ex)
+                    {
+                        _logger.LogProcessMessageError(_consumer, consumeResult.Key, consumeResult.Value, consumeResult.TopicPartitionOffset, ex);
+                    }
 
-            }, stoppingToken);
+                    Commit(consumeResult.TopicPartitionOffset);
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                _logger.LogInformation($"The consumer was stopped by cancellation token.");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogConsumeError(_consumer, ex);
+            }
+            finally
+            {
+                _consumer.Unsubscribe();
+            }
         }
 
         /// <summary>
