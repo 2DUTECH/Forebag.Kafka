@@ -17,7 +17,11 @@ namespace Forebag.Kafka.IntegrationTests
             using var cancellationTokenSource = new CancellationTokenSource();
             var cancellationToken = cancellationTokenSource.Token;
 
-            cancellationTokenSource.CancelAfter(TimeSpan.FromSeconds(30));
+#if DEBUG
+            cancellationTokenSource.CancelAfter(Timeout.InfiniteTimeSpan);
+#else
+            cancellationTokenSource.CancelAfter(TimeSpan.FromSeconds(60));
+#endif
 
             try
             {

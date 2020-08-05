@@ -1,6 +1,7 @@
 ﻿using Confluent.Kafka;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
 using System.Threading.Tasks;
 
 namespace Forebag.Kafka.IntegrationTests
@@ -21,7 +22,9 @@ namespace Forebag.Kafka.IntegrationTests
 
         public override Task ProcessMessage(string key, string value, TopicPartitionOffset offset)
         {
-            _buffer.AddMessage(offset.Topic, key, new TestKafkaMessage { Message = value });
+            var message = JsonConvert.DeserializeObject<TestKafkaMessage>(value);
+
+            _buffer.AddMessage(offset.Topic, key, message);
 
             return Task.CompletedTask;
         }

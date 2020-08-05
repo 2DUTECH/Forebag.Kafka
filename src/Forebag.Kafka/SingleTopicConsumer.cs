@@ -23,11 +23,11 @@ namespace Forebag.Kafka
         protected abstract SingleTopicConsumerOptions BuildOptions();
 
         /// <inheritdoc/>
-        protected sealed override (ConsumerConfig?, string[]?) BuildParameters()
+        protected sealed override (ConsumerConfig?, string[]?, IDeserializer<T>) BuildParameters()
         {
             var config = BuildOptions();
 
-            return (config, config.TopicForConsume != null ? new[] { config.TopicForConsume } : null);
+            return (config, config.TopicForConsume != null ? new[] { config.TopicForConsume } : null, new JsonDeserializer<T>());
         }
     }
 }
