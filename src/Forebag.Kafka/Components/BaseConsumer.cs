@@ -15,7 +15,7 @@ namespace Forebag.Kafka
         private IConsumer<string, string>? _consumer;
         private string[]? _topicsForSubsciption;
         private IDeserializer<T>? _deserializer;
-        private readonly CancellationTokenSource _stoppingCts = new CancellationTokenSource();
+        private readonly CancellationTokenSource _internalCancellationTokenSource = new CancellationTokenSource();
         private SemaphoreSlim _consumerStopedSignal = new SemaphoreSlim(0);
 
         /// <inheritdoc/>
@@ -34,12 +34,12 @@ namespace Forebag.Kafka
             {
                 throw new NullReferenceException($"Collection for subscribable topics wasn't initialized.");
             }
-            else if (parameters.Serializer == null)
+            else if (parameters.Deserializer == null)
             {
-                throw new NullReferenceException($"The {nameof(parameters.Serializer)} wasn't initialized.");
+                throw new NullReferenceException($"The {nameof(parameters.Deserializer)} wasn't initialized.");
             }
 
-            _deserializer = parameters.Serializer;
+            _deserializer = parameters.Deserializer;
 
             _topicsForSubsciption = parameters.TopicsForRead;
 
@@ -56,7 +56,7 @@ namespace Forebag.Kafka
             try
             {
                 // Signal cancellation to the executing method
-                _stoppingCts.Cancel();
+                _internalCancellationTokenSource.Cancel();
             }
             finally
             {
@@ -68,14 +68,17 @@ namespace Forebag.Kafka
         }
 
         /// <inheritdoc/>
-        protected abstract (ConsumerConfig? ConsumerConfig, string[]? TopicsForRead, IDeserializer<T> Serializer) BuildParameters();
+        protected abstract (ConsumerConfig? ConsumerConfig, string[]? TopicsForRead, IDeserializer<T> Deserializer) BuildParameters();
 
         /// <inheritdoc/>
-        protected override Task ExecuteAsync(CancellationToken stoppingToken)
+        protected override Task ExecuteAsync(CancellationToken cancellationToken)
         {
             async Task Consume()
             {
-                using var consumerCts = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken, _stoppingCts.Token);
+                using var consumerCts =
+                    CancellationTokenSource.CreateLinkedTokenSource(
+                        cancellationToken,
+                        _internalCancellationTokenSource.Token);
 
                 _consumer!.Subscribe(_topicsForSubsciption!);
 
@@ -117,7 +120,7 @@ namespace Forebag.Kafka
                 _consumerStopedSignal.Release();
             }
 
-            return Task.Run(Consume, stoppingToken);
+            return Task.Run(Consume, cancellationToken);
         }
 
         /// <inheritdoc/>
@@ -141,6 +144,8 @@ namespace Forebag.Kafka
         /// <inheritdoc/>
         public override void Dispose()
         {
+            _internalCancellationTokenSource.Cancel();
+            _internalCancellationTokenSource.Dispose();
             _consumerStopedSignal?.Dispose();
             _consumer?.Dispose();
 

@@ -15,7 +15,6 @@ namespace Forebag.Kafka.IntegrationTests
         private readonly IHost _host;
         private IConfiguration? _configuration;
         protected readonly Lazy<IServiceProvider> ServiceProvider;
-        private Task StartHostTask;
 
         public BaseFixture(ITestOutputHelper output)
         {
@@ -40,7 +39,7 @@ namespace Forebag.Kafka.IntegrationTests
                 _output.WriteLine("Host stopped firing.");
             });
 
-            StartHostTask = _host.StartAsync();
+            _host.StartAsync();
         }
 
         public IHostBuilder CreateHostBuilder(params string[] args) =>

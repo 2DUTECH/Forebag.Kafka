@@ -1,9 +1,9 @@
 namespace Forebag.Kafka
 {
     /// <inheritdoc/>
-    public interface IDeserializer<TOut>
+    public interface IDeserializer<T>
     {
         /// <inheritdoc/>
-        TOut Deserialize(string value);
+        T Deserialize(string value);
     }
 }

@@ -1,5 +1,3 @@
-using Confluent.Kafka;
-
 namespace Forebag.Kafka
 {
     /// <inheritdoc/>

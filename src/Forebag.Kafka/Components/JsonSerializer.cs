@@ -1,4 +1,3 @@
-using Confluent.Kafka;
 using Newtonsoft.Json;
 
 namespace Forebag.Kafka
