@@ -2,8 +2,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 using Xunit.Abstractions;
 
 namespace Forebag.Kafka.IntegrationTests
@@ -13,7 +14,6 @@ namespace Forebag.Kafka.IntegrationTests
         private readonly ITestOutputHelper _output;
         private readonly IHost _host;
         private IConfiguration? _configuration;
-
         protected readonly Lazy<IServiceProvider> ServiceProvider;
 
         public BaseFixture(ITestOutputHelper output)
@@ -21,7 +21,25 @@ namespace Forebag.Kafka.IntegrationTests
             ServiceProvider = new Lazy<IServiceProvider>(() => _host.Services);
             _output = output;
             _host = CreateHostBuilder().Build();
-            _host.Start();
+
+            var lifetime = _host.Services.GetRequiredService<IHostApplicationLifetime>();
+
+            lifetime.ApplicationStarted.Register(() =>
+            {
+                _output.WriteLine("Host started.");
+            });
+
+            lifetime.ApplicationStopping.Register(() =>
+            {
+                _output.WriteLine("Host stopping firing.");
+            });
+
+            lifetime.ApplicationStopped.Register(() =>
+            {
+                _output.WriteLine("Host stopped firing.");
+            });
+
+            _host.StartAsync();
         }
 
         public IHostBuilder CreateHostBuilder(params string[] args) =>
@@ -46,46 +64,55 @@ namespace Forebag.Kafka.IntegrationTests
                     services.AddLogging();
 
                     // Options:
-                    services.Configure<SingleTopicProducerConfig>(
+                    services.Configure<SingleTopicProducerOptions>(
                         _configuration!.GetSection(nameof(SingleTopicProducer)));
 
-                    services.Configure<MultipleTopicProducerConfig>(
+                    services.Configure<MultipleTopicProducerOptions>(
                         _configuration!.GetSection(nameof(MultipleTopicProducer)));
 
-                    services.Configure<SingleTopicConsumerBackgroundServiceConfig>(
+                    services.Configure<SingleTopicConsumerOptions>(
                         _configuration!.GetSection(nameof(SingleTopicConsumer)));
 
-                    services.Configure<MultipleTopicConsumerBackgroundServiceConfig>(
+                    services.Configure<MultipleTopicConsumerOptions>(
                         _configuration!.GetSection(nameof(MultipleTopicConsumer)));
 
-                    services.Configure<StringTypedConsumerBackgroundServiceConfig>(
+                    services.Configure<StringTypedConsumerOptions>(
                         _configuration!.GetSection(nameof(StringTypedConsumer)));
 
-                    services.Configure<TestConsumerBufferConfig>(
+                    services.Configure<TestConsumerBufferOptions>(
                         _configuration!.GetSection(nameof(TestConsumerBuffer)));
 
                     // Services: 
+                    services.AddSingleton<ISerializer<TestKafkaMessage>>(
+                        (provider) => new JsonSerializer<TestKafkaMessage>());
+
                     services.AddSingleton<TestConsumerBuffer>();
+                    services.AddSingleton<SingleTopicProducer>();
+                    services.AddSingleton<MultipleTopicProducer>();
 
-                    services.AddSingleton(serviceProvider =>
-                        new SingleTopicProducer(
-                            serviceProvider.GetService<IOptions<SingleTopicProducerConfig>>().Value,
-                            serviceProvider.GetService<ILogger<SingleTopicProducer>>()));
-
-                    services.AddSingleton(serviceProvider =>
-                        new MultipleTopicProducer(
-                            serviceProvider.GetService<IOptions<MultipleTopicProducerConfig>>().Value,
-                            serviceProvider.GetService<ILogger<MultipleTopicProducer>>()));
-
-                    services.AddHostedService<SingleTopicConsumer>();
                     services.AddHostedService<MultipleTopicConsumer>();
+                    services.AddHostedService<SingleTopicConsumer>();
                     services.AddHostedService<StringTypedConsumer>();
                 });
 
         public void Dispose()
         {
-            _host?.StopAsync().Wait();
-            _host?.Dispose();
+            try
+            {
+                var result = Task.WhenAny(
+                    _host.StopAsync(),
+                    Task.Delay(Timeout.Infinite));
+
+                result.Wait();
+            }
+            catch (Exception ex)
+            {
+                var a = ex;
+            }
+            finally
+            {
+                _host?.Dispose();
+            }
         }
     }
 }

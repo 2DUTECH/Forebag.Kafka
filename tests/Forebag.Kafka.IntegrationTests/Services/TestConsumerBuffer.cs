@@ -8,19 +8,19 @@ namespace Forebag.Kafka.IntegrationTests
 {
     public class TestConsumerBuffer
     {
-        private readonly TestConsumerBufferConfig _config;
+        private readonly TestConsumerBufferOptions _options;
         private readonly ConcurrentDictionary<string, MessageBuffer> _topics;
 
-        public TestConsumerBuffer(IOptions<TestConsumerBufferConfig> config)
+        public TestConsumerBuffer(IOptions<TestConsumerBufferOptions> options)
         {
-            _config = config.Value;
+            _options = options.Value;
             _topics = new ConcurrentDictionary<string, MessageBuffer>();
-            _topics.AddOrUpdate(_config.TopicA!, new MessageBuffer(), (topicName, MessageBuffer) => MessageBuffer);
-            _topics.AddOrUpdate(_config.TopicB1!, new MessageBuffer(), (topicName, MessageBuffer) => MessageBuffer);
-            _topics.AddOrUpdate(_config.TopicB2!, new MessageBuffer(), (topicName, MessageBuffer) => MessageBuffer);
-            _topics.AddOrUpdate(_config.TopicC1!, new MessageBuffer(), (topicName, MessageBuffer) => MessageBuffer);
-            _topics.AddOrUpdate(_config.TopicC2!, new MessageBuffer(), (topicName, MessageBuffer) => MessageBuffer);
-            _topics.AddOrUpdate(_config.TopicC3!, new MessageBuffer(), (topicName, MessageBuffer) => MessageBuffer);
+            _topics.AddOrUpdate(_options.TopicA!, new MessageBuffer(), (topicName, MessageBuffer) => MessageBuffer);
+            _topics.AddOrUpdate(_options.TopicB1!, new MessageBuffer(), (topicName, MessageBuffer) => MessageBuffer);
+            _topics.AddOrUpdate(_options.TopicB2!, new MessageBuffer(), (topicName, MessageBuffer) => MessageBuffer);
+            _topics.AddOrUpdate(_options.TopicC1!, new MessageBuffer(), (topicName, MessageBuffer) => MessageBuffer);
+            _topics.AddOrUpdate(_options.TopicC2!, new MessageBuffer(), (topicName, MessageBuffer) => MessageBuffer);
+            _topics.AddOrUpdate(_options.TopicC3!, new MessageBuffer(), (topicName, MessageBuffer) => MessageBuffer);
         }
 
         public MessageBuffer GetTopicByName(string topicName)
@@ -35,22 +35,22 @@ namespace Forebag.Kafka.IntegrationTests
             .AddMessage(key, message);
 
         public async Task<TestKafkaMessage> TryConsumeFromA(string key, CancellationToken cancellationToken) =>
-            await GetTopicByName(_config.TopicA!).TryConsume(key, cancellationToken);
+            await GetTopicByName(_options.TopicA!).TryConsume(key, cancellationToken);
 
         public async Task<TestKafkaMessage> TryConsumeFromB1(string key, CancellationToken cancellationToken) =>
-            await GetTopicByName(_config.TopicB1!).TryConsume(key, cancellationToken);
+            await GetTopicByName(_options.TopicB1!).TryConsume(key, cancellationToken);
 
         public async Task<TestKafkaMessage> TryConsumeFromB2(string key, CancellationToken cancellationToken) =>
-            await GetTopicByName(_config.TopicB2!).TryConsume(key, cancellationToken);
+            await GetTopicByName(_options.TopicB2!).TryConsume(key, cancellationToken);
 
         public async Task<TestKafkaMessage> TryConsumeFromC1(string key, CancellationToken cancellationToken) =>
-            await GetTopicByName(_config.TopicC1!).TryConsume(key, cancellationToken);
+            await GetTopicByName(_options.TopicC1!).TryConsume(key, cancellationToken);
 
         public async Task<TestKafkaMessage> TryConsumeFromC2(string key, CancellationToken cancellationToken) =>
-            await GetTopicByName(_config.TopicC2!).TryConsume(key, cancellationToken);
+            await GetTopicByName(_options.TopicC2!).TryConsume(key, cancellationToken);
 
         public async Task<TestKafkaMessage> TryConsumeFromC3(string key, CancellationToken cancellationToken) =>
-            await GetTopicByName(_config.TopicC3!).TryConsume(key, cancellationToken);
+            await GetTopicByName(_options.TopicC3!).TryConsume(key, cancellationToken);
 
         public class MessageBuffer
         {

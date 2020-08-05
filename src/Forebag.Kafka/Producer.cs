@@ -1,6 +1,6 @@
 ﻿using Confluent.Kafka;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
+using Microsoft.Extensions.Options;
 using System;
 using System.Threading.Tasks;
 
@@ -9,25 +9,27 @@ namespace Forebag.Kafka
     /// <summary>
     /// Представляет Producer.
     /// </summary>
-    public class KafkaProducer : IDisposable
+    public class Producer<T> : IDisposable
     {
-        private const int TimeForProduceFlush = 1000;
-
-        private readonly ILogger<KafkaProducer> _logger;
-        private readonly ProducerConfig _config;
+        private readonly ILogger<Producer<T>> _logger;
+        private readonly ProducerOptions _options;
+        private readonly ISerializer<T> _serializer;
         private readonly Lazy<IProducer<string, string>> _lazyProducer;
-        private bool _disposed = false;
+        private IProducer<string, string> _producer => _lazyProducer.Value;
 
-        private IProducer<string, string> Producer => _lazyProducer.Value;
-
-        public KafkaProducer(ProducerConfig config, ILogger<KafkaProducer> logger)
+        /// <inheritdoc/>
+        public Producer(
+            IOptions<ProducerOptions> options,
+            ILogger<Producer<T>> logger,
+            ISerializer<T> serializer)
         {
-            _config = config;
+            _options = options.Value;
             _logger = logger;
+            _serializer = serializer;
 
             _lazyProducer = new Lazy<IProducer<string, string>>(() =>
             {
-                var producer = new ProducerBuilder<string, string>(_config).Build();
+                var producer = new ProducerBuilder<string, string>(_options).Build();
 
                 _logger.LogInfoStartProducing(producer);
 
@@ -41,13 +43,13 @@ namespace Forebag.Kafka
         /// <param name="key">Ключ сообщения.</param>
         /// <param name="value">Экземпляр сообщения.</param>
         /// <param name="topicName">Топик для отправляемого сообщения.</param>
-        public async Task<TopicPartitionOffset> Produce<T>(string key, T value, string topicName)
+        protected async Task<TopicPartitionOffset> Produce(string key, T value, string topicName)
         {
             string? serializedValue = null;
 
             try
             {
-                serializedValue = JsonConvert.SerializeObject(value);
+                serializedValue = _serializer.Serialize(value);
 
                 var message = new Message<string, string>
                 {
@@ -55,49 +57,35 @@ namespace Forebag.Kafka
                     Value = serializedValue
                 };
 
-                var deliveryResult = await Producer.ProduceAsync(topicName, message);
+                var deliveryResult = await _producer.ProduceAsync(topicName, message);
 
-                _logger.LogDelivery(Producer, key, serializedValue, deliveryResult.TopicPartitionOffset);
+                _logger.LogDelivery(_producer, key, serializedValue, deliveryResult.TopicPartitionOffset);
 
                 return deliveryResult.TopicPartitionOffset;
             }
             catch (ProduceException<string, string> ex)
             {
-                _logger.LogDeliveryError(Producer, key, serializedValue!, ex.Error.Reason);
+                _logger.LogDeliveryError(_producer, key, serializedValue!, ex.Error.Reason);
 
                 throw;
             }
             catch (Exception ex)
             {
-                _logger.LogDeliveryError(Producer, key, serializedValue!, ex.Message);
+                _logger.LogDeliveryError(_producer, key, serializedValue!, ex.Message);
 
                 throw;
             }
         }
 
-        ~KafkaProducer()
-        {
-            Dispose(false);
-        }
-
+        /// <inheritdoc/>
         public void Dispose()
         {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (_disposed)
-                return;
-
-            if (disposing && _lazyProducer.IsValueCreated)
+            if (_lazyProducer.IsValueCreated)
             {
-                Producer.Flush(TimeSpan.FromMilliseconds(TimeForProduceFlush));
-                Producer.Dispose();
-            }
+                _producer.Flush(TimeSpan.FromSeconds(5));
 
-            _disposed = true;
+                _producer.Dispose();
+            }
         }
     }
 }

@@ -1,4 +1,4 @@
-using Confluent.Kafka;
+﻿using Confluent.Kafka;
 using Microsoft.Extensions.Logging;
 
 namespace Forebag.Kafka
@@ -10,22 +10,24 @@ namespace Forebag.Kafka
     /// Сообщения полученые из заданного топика десериализуются из JSON.
     /// Конфигурация компонента производится из класса наследника.
     /// </remarks>
-    public abstract class MultipleTopicConsumerBackgroundService<T> : BaseConsumerBackgroundService<T>
+    public abstract class MultipleTopicConsumer<T> : BaseConsumer<T>
     {
-        protected MultipleTopicConsumerBackgroundService(ILogger<MultipleTopicConsumerBackgroundService<T>> logger)
+        /// <inheritdoc/>
+        protected MultipleTopicConsumer(ILogger<MultipleTopicConsumer<T>> logger)
             : base(logger) { }
 
         /// <summary>
         /// Создание конфигурации для консьюмера.
         /// </summary>
         /// <returns>Объект конфигурации.</returns>
-        protected abstract MultipleTopicConsumerBackgroundServiceConfig BuildConfig();
+        protected abstract MultipleTopicConsumerOptions BuildOptions();
 
-        protected sealed override (ConsumerConfig?, string[]?) BuildParameters()
+        /// <inheritdoc/>
+        protected sealed override (ConsumerConfig?, string[]?, IDeserializer<T>) BuildParameters()
         {
-            var config = BuildConfig();
+            var config = BuildOptions();
 
-            return (config, config.TopicsForConsume);
+            return (config, config.TopicsForConsume, new JsonDeserializer<T>());
         }
     }
 }

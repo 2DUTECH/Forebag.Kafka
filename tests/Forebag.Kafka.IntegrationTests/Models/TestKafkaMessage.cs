@@ -6,9 +6,9 @@ namespace Forebag.Kafka.IntegrationTests
     {
         public string? Message { get; set; }
 
-        bool IEquatable<TestKafkaMessage>.Equals(TestKafkaMessage other)
+        bool IEquatable<TestKafkaMessage>.Equals(TestKafkaMessage? other)
         {
-            return other.Message != null && this.Message != null && this.Message.Equals(other.Message);
+            return other != null && other.Message != null && this.Message != null && this.Message.Equals(other.Message);
         }
     }
 }

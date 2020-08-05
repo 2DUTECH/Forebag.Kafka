@@ -17,7 +17,11 @@ namespace Forebag.Kafka.IntegrationTests
             using var cancellationTokenSource = new CancellationTokenSource();
             var cancellationToken = cancellationTokenSource.Token;
 
-            cancellationTokenSource.CancelAfter(TimeSpan.FromSeconds(30));
+#if DEBUG
+            cancellationTokenSource.CancelAfter(Timeout.InfiniteTimeSpan);
+#else
+            cancellationTokenSource.CancelAfter(TimeSpan.FromSeconds(60));
+#endif
 
             try
             {
@@ -27,12 +31,12 @@ namespace Forebag.Kafka.IntegrationTests
 
                 var messageBuffer = ServiceProvider.Value.GetRequiredService<TestConsumerBuffer>();
 
-                Assert.Equal(2, messageBuffer.GetTopicByName(nameof(TestConsumerBufferConfig.TopicA)).Messages.Count);
-                Assert.Equal(2, messageBuffer.GetTopicByName(nameof(TestConsumerBufferConfig.TopicB1)).Messages.Count);
-                Assert.Equal(2, messageBuffer.GetTopicByName(nameof(TestConsumerBufferConfig.TopicB2)).Messages.Count);
-                Assert.Equal(2, messageBuffer.GetTopicByName(nameof(TestConsumerBufferConfig.TopicC1)).Messages.Count);
-                Assert.Equal(2, messageBuffer.GetTopicByName(nameof(TestConsumerBufferConfig.TopicC2)).Messages.Count);
-                Assert.Equal(2, messageBuffer.GetTopicByName(nameof(TestConsumerBufferConfig.TopicC3)).Messages.Count);
+                Assert.Equal(2, messageBuffer.GetTopicByName(nameof(TestConsumerBufferOptions.TopicA)).Messages.Count);
+                Assert.Equal(2, messageBuffer.GetTopicByName(nameof(TestConsumerBufferOptions.TopicB1)).Messages.Count);
+                Assert.Equal(2, messageBuffer.GetTopicByName(nameof(TestConsumerBufferOptions.TopicB2)).Messages.Count);
+                Assert.Equal(2, messageBuffer.GetTopicByName(nameof(TestConsumerBufferOptions.TopicC1)).Messages.Count);
+                Assert.Equal(2, messageBuffer.GetTopicByName(nameof(TestConsumerBufferOptions.TopicC2)).Messages.Count);
+                Assert.Equal(2, messageBuffer.GetTopicByName(nameof(TestConsumerBufferOptions.TopicC3)).Messages.Count);
             }
             catch (Exception ex)
             {
