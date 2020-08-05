@@ -7,10 +7,10 @@ namespace Forebag.Kafka.IntegrationTests
 {
     public class MultipleTopicProducer : Producer<TestKafkaMessage>
     {
-        private readonly MultipleTopicProducerConfig _options;
+        private readonly MultipleTopicProducerOptions _options;
 
         public MultipleTopicProducer(
-            IOptions<MultipleTopicProducerConfig> options,
+            IOptions<MultipleTopicProducerOptions> options,
             ILogger<MultipleTopicProducer> logger,
             ISerializer<TestKafkaMessage> serializer) : base(options, logger, serializer)
         {

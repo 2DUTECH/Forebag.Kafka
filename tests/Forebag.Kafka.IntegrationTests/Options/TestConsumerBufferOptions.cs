@@ -1,6 +1,6 @@
 ﻿namespace Forebag.Kafka.IntegrationTests
 {
-    public class TestConsumerBufferConfig
+    public class TestConsumerBufferOptions
     {
         public string? TopicA { get; set; }
         public string? TopicB1 { get; set; }

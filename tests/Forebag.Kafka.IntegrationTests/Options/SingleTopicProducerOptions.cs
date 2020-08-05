@@ -1,6 +1,6 @@
 ﻿namespace Forebag.Kafka.IntegrationTests
 {
-    public class SingleTopicProducerConfig : ProducerOptions
+    public class SingleTopicProducerOptions : ProducerOptions
     {
         public string? TopicForSingleTopicConsumer { get; set; }
     }

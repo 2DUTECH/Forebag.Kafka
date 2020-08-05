@@ -8,10 +8,10 @@ namespace Forebag.Kafka.IntegrationTests
 {
     public class TestConsumerBuffer
     {
-        private readonly TestConsumerBufferConfig _config;
+        private readonly TestConsumerBufferOptions _config;
         private readonly ConcurrentDictionary<string, MessageBuffer> _topics;
 
-        public TestConsumerBuffer(IOptions<TestConsumerBufferConfig> config)
+        public TestConsumerBuffer(IOptions<TestConsumerBufferOptions> config)
         {
             _config = config.Value;
             _topics = new ConcurrentDictionary<string, MessageBuffer>();

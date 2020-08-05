@@ -7,10 +7,10 @@ namespace Forebag.Kafka.IntegrationTests
 {
     public class SingleTopicProducer : Producer<TestKafkaMessage>
     {
-        private readonly SingleTopicProducerConfig _options;
+        private readonly SingleTopicProducerOptions _options;
 
         public SingleTopicProducer(
-            IOptions<SingleTopicProducerConfig> options,
+            IOptions<SingleTopicProducerOptions> options,
             ILogger<SingleTopicProducer> logger,
             ISerializer<TestKafkaMessage> serializer) : base(options, logger, serializer)
         {

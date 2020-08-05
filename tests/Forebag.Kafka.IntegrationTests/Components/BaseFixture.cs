@@ -64,10 +64,10 @@ namespace Forebag.Kafka.IntegrationTests
                     services.AddLogging();
 
                     // Options:
-                    services.Configure<SingleTopicProducerConfig>(
+                    services.Configure<SingleTopicProducerOptions>(
                         _configuration!.GetSection(nameof(SingleTopicProducer)));
 
-                    services.Configure<MultipleTopicProducerConfig>(
+                    services.Configure<MultipleTopicProducerOptions>(
                         _configuration!.GetSection(nameof(MultipleTopicProducer)));
 
                     services.Configure<SingleTopicConsumerOptions>(
@@ -79,7 +79,7 @@ namespace Forebag.Kafka.IntegrationTests
                     services.Configure<StringTypedConsumerOptions>(
                         _configuration!.GetSection(nameof(StringTypedConsumer)));
 
-                    services.Configure<TestConsumerBufferConfig>(
+                    services.Configure<TestConsumerBufferOptions>(
                         _configuration!.GetSection(nameof(TestConsumerBuffer)));
 
                     // Services: 
