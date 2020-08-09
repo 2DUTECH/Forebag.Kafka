@@ -1,31 +1,32 @@
 ﻿using Confluent.Kafka;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
 using System;
 using System.Threading.Tasks;
 
 namespace Forebag.Kafka
 {
     /// <summary>
-    /// Представляет Producer.
+    ///     Wrapper for <see href="Confluent.Kafka.IProducer"/>.
     /// </summary>
-    public class Producer<T> : IDisposable
+    /// <remarks>
+    ///     All messages which is sending to topics serialize to JSON string. 
+    /// </remarks>
+    public class Producer : IDisposable
     {
-        private readonly ILogger<Producer<T>> _logger;
+        private readonly ILogger<Producer> _logger;
         private readonly ProducerOptions _options;
-        private readonly ISerializer<T> _serializer;
         private readonly Lazy<IProducer<string, string>> _lazyProducer;
         private IProducer<string, string> _producer => _lazyProducer.Value;
 
         /// <inheritdoc/>
         public Producer(
             IOptions<ProducerOptions> options,
-            ILogger<Producer<T>> logger,
-            ISerializer<T> serializer)
+            ILogger<Producer> logger)
         {
             _options = options.Value;
             _logger = logger;
-            _serializer = serializer;
 
             _lazyProducer = new Lazy<IProducer<string, string>>(() =>
             {
@@ -38,18 +39,18 @@ namespace Forebag.Kafka
         }
 
         /// <summary>
-        /// Выполняет сериализацию сообщения в JSON и отправку в указанный топик.
+        /// Serializes message to JSON and sends it to the topic.
         /// </summary>
-        /// <param name="key">Ключ сообщения.</param>
-        /// <param name="value">Экземпляр сообщения.</param>
-        /// <param name="topicName">Топик для отправляемого сообщения.</param>
-        protected async Task<TopicPartitionOffset> Produce(string key, T value, string topicName)
+        /// <param name="key">Key for message.</param>
+        /// <param name="value">Message.</param>
+        /// <param name="topicName">Topic for sending.</param>
+        public async Task<TopicPartitionOffset> Produce<T>(string key, T value, string topicName)
         {
             string? serializedValue = null;
 
             try
             {
-                serializedValue = _serializer.Serialize(value);
+                serializedValue = JsonConvert.SerializeObject(value, Formatting.None);
 
                 var message = new Message<string, string>
                 {

@@ -12,7 +12,7 @@ namespace Forebag.Kafka.IntegrationTests
         public BasicTests(ITestOutputHelper output) : base(output) { }
 
         [Fact]
-        public async Task ProduceConsumeMessagesInSequenceFromDifferentProducersToDifferentConsumersWithCommits()
+        public async Task ProduceConsumeMessagesInSequence()
         {
             using var cancellationTokenSource = new CancellationTokenSource();
             var cancellationToken = cancellationTokenSource.Token;
@@ -31,12 +31,11 @@ namespace Forebag.Kafka.IntegrationTests
 
                 var messageBuffer = ServiceProvider.Value.GetRequiredService<TestConsumerBuffer>();
 
-                Assert.Equal(2, messageBuffer.GetTopicByName(nameof(TestConsumerBufferOptions.TopicA)).Messages.Count);
-                Assert.Equal(2, messageBuffer.GetTopicByName(nameof(TestConsumerBufferOptions.TopicB1)).Messages.Count);
-                Assert.Equal(2, messageBuffer.GetTopicByName(nameof(TestConsumerBufferOptions.TopicB2)).Messages.Count);
-                Assert.Equal(2, messageBuffer.GetTopicByName(nameof(TestConsumerBufferOptions.TopicC1)).Messages.Count);
-                Assert.Equal(2, messageBuffer.GetTopicByName(nameof(TestConsumerBufferOptions.TopicC2)).Messages.Count);
-                Assert.Equal(2, messageBuffer.GetTopicByName(nameof(TestConsumerBufferOptions.TopicC3)).Messages.Count);
+
+                foreach (var topic in messageBuffer.Topics)
+                {
+                    Assert.Equal(2, messageBuffer.GetTopicByName(topic).Messages.Count);
+                }
             }
             catch (Exception ex)
             {
@@ -56,41 +55,17 @@ namespace Forebag.Kafka.IntegrationTests
             var messageBuffer = ServiceProvider.Value.GetRequiredService<TestConsumerBuffer>();
 
             using var scope = ServiceProvider.Value.CreateScope();
-            var singleTopicProducer = scope.ServiceProvider.GetRequiredService<SingleTopicProducer>();
-            var multipleTopicProducer = scope.ServiceProvider.GetRequiredService<MultipleTopicProducer>();
+            var singleTopicProducer = scope.ServiceProvider.GetRequiredService<TestProducer>();
 
             await singleTopicProducer.Produce(testKey, testMessage);
-            await multipleTopicProducer.Produce(testKey, testMessage);
 
-            var consumeResultA = await messageBuffer.TryConsumeFromA(testKey, cancellationToken);
+            var consumeResults = messageBuffer.Consume(testKey, cancellationToken);
 
-            Assert.NotNull(consumeResultA);
-            Assert.Equal(testMessage.Message, consumeResultA.Message);
-
-            var consumeResultB1 = await messageBuffer.TryConsumeFromB1(testKey, cancellationToken);
-
-            Assert.NotNull(consumeResultB1);
-            Assert.Equal(testMessage.Message, consumeResultB1.Message);
-
-            var consumeResultB2 = await messageBuffer.TryConsumeFromB2(testKey, cancellationToken);
-
-            Assert.NotNull(consumeResultB2);
-            Assert.Equal(testMessage.Message, consumeResultB2.Message);
-
-            var consumeResultC1 = await messageBuffer.TryConsumeFromC1(testKey, cancellationToken);
-
-            Assert.NotNull(consumeResultC1);
-            Assert.Equal(testMessage.Message, consumeResultC1.Message);
-
-            var consumeResultC2 = await messageBuffer.TryConsumeFromC2(testKey, cancellationToken);
-
-            Assert.NotNull(consumeResultC2);
-            Assert.Equal(testMessage.Message, consumeResultC2.Message);
-
-            var consumeResultC3 = await messageBuffer.TryConsumeFromC3(testKey, cancellationToken);
-
-            Assert.NotNull(consumeResultC3);
-            Assert.Equal(testMessage.Message, consumeResultC3.Message);
+            foreach (var consumeResult in consumeResults)
+            {
+                Assert.NotNull(consumeResult);
+                Assert.Equal(testMessage.Message, consumeResult.Message);
+            }
         }
     }
 }

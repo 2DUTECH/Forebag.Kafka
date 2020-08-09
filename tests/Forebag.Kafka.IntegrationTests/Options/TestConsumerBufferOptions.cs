@@ -1,12 +1,9 @@
-﻿namespace Forebag.Kafka.IntegrationTests
+﻿using System.Collections.Generic;
+
+namespace Forebag.Kafka.IntegrationTests
 {
     public class TestConsumerBufferOptions
     {
-        public string? TopicA { get; set; }
-        public string? TopicB1 { get; set; }
-        public string? TopicB2 { get; set; }
-        public string? TopicC1 { get; set; }
-        public string? TopicC2 { get; set; }
-        public string? TopicC3 { get; set; }
+        public Dictionary<string, string>? Topics { get; set; }
     }
 }

@@ -1,6 +1,8 @@
 ﻿using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -11,16 +13,17 @@ namespace Forebag.Kafka.IntegrationTests
         private readonly TestConsumerBufferOptions _options;
         private readonly ConcurrentDictionary<string, MessageBuffer> _topics;
 
+        public List<string> Topics => _options.Topics!.Keys.ToList();
+
         public TestConsumerBuffer(IOptions<TestConsumerBufferOptions> options)
         {
             _options = options.Value;
             _topics = new ConcurrentDictionary<string, MessageBuffer>();
-            _topics.AddOrUpdate(_options.TopicA!, new MessageBuffer(), (topicName, MessageBuffer) => MessageBuffer);
-            _topics.AddOrUpdate(_options.TopicB1!, new MessageBuffer(), (topicName, MessageBuffer) => MessageBuffer);
-            _topics.AddOrUpdate(_options.TopicB2!, new MessageBuffer(), (topicName, MessageBuffer) => MessageBuffer);
-            _topics.AddOrUpdate(_options.TopicC1!, new MessageBuffer(), (topicName, MessageBuffer) => MessageBuffer);
-            _topics.AddOrUpdate(_options.TopicC2!, new MessageBuffer(), (topicName, MessageBuffer) => MessageBuffer);
-            _topics.AddOrUpdate(_options.TopicC3!, new MessageBuffer(), (topicName, MessageBuffer) => MessageBuffer);
+
+            foreach (var topic in _options.Topics!)
+            {
+                _topics.AddOrUpdate(topic.Key, new MessageBuffer(), (topicName, MessageBuffer) => MessageBuffer);
+            }
         }
 
         public MessageBuffer GetTopicByName(string topicName)
@@ -34,23 +37,15 @@ namespace Forebag.Kafka.IntegrationTests
             GetTopicByName(topicName)
             .AddMessage(key, message);
 
-        public async Task<TestKafkaMessage> TryConsumeFromA(string key, CancellationToken cancellationToken) =>
-            await GetTopicByName(_options.TopicA!).TryConsume(key, cancellationToken);
+        public async Task<TestKafkaMessage> TryConsume(string topicName, string key, CancellationToken cancellationToken) =>
+            await GetTopicByName(topicName).TryConsume(key, cancellationToken);
 
-        public async Task<TestKafkaMessage> TryConsumeFromB1(string key, CancellationToken cancellationToken) =>
-            await GetTopicByName(_options.TopicB1!).TryConsume(key, cancellationToken);
+        public List<TestKafkaMessage> Consume(string key, CancellationToken cancellationToken)
+        {
+            SpinWait.SpinUntil(() => !_topics.All(t => t.Value.Messages.ContainsKey(key)) || !cancellationToken.IsCancellationRequested);
 
-        public async Task<TestKafkaMessage> TryConsumeFromB2(string key, CancellationToken cancellationToken) =>
-            await GetTopicByName(_options.TopicB2!).TryConsume(key, cancellationToken);
-
-        public async Task<TestKafkaMessage> TryConsumeFromC1(string key, CancellationToken cancellationToken) =>
-            await GetTopicByName(_options.TopicC1!).TryConsume(key, cancellationToken);
-
-        public async Task<TestKafkaMessage> TryConsumeFromC2(string key, CancellationToken cancellationToken) =>
-            await GetTopicByName(_options.TopicC2!).TryConsume(key, cancellationToken);
-
-        public async Task<TestKafkaMessage> TryConsumeFromC3(string key, CancellationToken cancellationToken) =>
-            await GetTopicByName(_options.TopicC3!).TryConsume(key, cancellationToken);
+            return _topics.Values.Select(v => v.Messages.Single(m => m.Key.Equals(key)).Value).ToList();
+        }
 
         public class MessageBuffer
         {

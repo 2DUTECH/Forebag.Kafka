@@ -12,6 +12,7 @@ namespace Forebag.Kafka.IntegrationTests
     public class BaseFixture : IDisposable
     {
         private readonly ITestOutputHelper _output;
+        private ILogger<IHost> _logger;
         private readonly IHost _host;
         private IConfiguration? _configuration;
         protected readonly Lazy<IServiceProvider> ServiceProvider;
@@ -22,22 +23,14 @@ namespace Forebag.Kafka.IntegrationTests
             _output = output;
             _host = CreateHostBuilder().Build();
 
+            _logger = _host.Services.GetRequiredService<ILogger<IHost>>();
             var lifetime = _host.Services.GetRequiredService<IHostApplicationLifetime>();
 
-            lifetime.ApplicationStarted.Register(() =>
-            {
-                _output.WriteLine("Host started.");
-            });
+            lifetime.ApplicationStarted.Register(() => _logger.LogInformation("Host started."));
 
-            lifetime.ApplicationStopping.Register(() =>
-            {
-                _output.WriteLine("Host stopping firing.");
-            });
+            lifetime.ApplicationStopping.Register(() => _logger.LogInformation("Host stopping firing."));
 
-            lifetime.ApplicationStopped.Register(() =>
-            {
-                _output.WriteLine("Host stopped firing.");
-            });
+            lifetime.ApplicationStopped.Register(() => _logger.LogInformation("Host stopped firing."));
 
             _host.StartAsync();
         }
@@ -56,6 +49,7 @@ namespace Forebag.Kafka.IntegrationTests
                 {
                     logging
                         .ClearProviders()
+                        .AddConsole()
                         .AddXUnit(_output);
                 })
                 .ConfigureServices((hostContext, services) =>
@@ -64,35 +58,20 @@ namespace Forebag.Kafka.IntegrationTests
                     services.AddLogging();
 
                     // Options:
-                    services.Configure<SingleTopicProducerOptions>(
-                        _configuration!.GetSection(nameof(SingleTopicProducer)));
+                    services.Configure<TestProducerOptions>(
+                        _configuration!.GetSection(nameof(TestProducer)));
 
-                    services.Configure<MultipleTopicProducerOptions>(
-                        _configuration!.GetSection(nameof(MultipleTopicProducer)));
-
-                    services.Configure<SingleTopicConsumerOptions>(
-                        _configuration!.GetSection(nameof(SingleTopicConsumer)));
-
-                    services.Configure<MultipleTopicConsumerOptions>(
-                        _configuration!.GetSection(nameof(MultipleTopicConsumer)));
-
-                    services.Configure<StringTypedConsumerOptions>(
-                        _configuration!.GetSection(nameof(StringTypedConsumer)));
+                    services.Configure<ConsumerOptions>(
+                        _configuration!.GetSection(nameof(TestConsumer)));
 
                     services.Configure<TestConsumerBufferOptions>(
                         _configuration!.GetSection(nameof(TestConsumerBuffer)));
 
                     // Services: 
-                    services.AddSingleton<ISerializer<TestKafkaMessage>>(
-                        (provider) => new JsonSerializer<TestKafkaMessage>());
-
                     services.AddSingleton<TestConsumerBuffer>();
-                    services.AddSingleton<SingleTopicProducer>();
-                    services.AddSingleton<MultipleTopicProducer>();
+                    services.AddSingleton<TestProducer>();
 
-                    services.AddHostedService<MultipleTopicConsumer>();
-                    services.AddHostedService<SingleTopicConsumer>();
-                    services.AddHostedService<StringTypedConsumer>();
+                    services.AddHostedService<TestConsumer>();
                 });
 
         public void Dispose()

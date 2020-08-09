@@ -1,21 +1,19 @@
-using Confluent.Kafka;
+﻿using Confluent.Kafka;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Threading.Tasks;
 
 namespace Forebag.Kafka.IntegrationTests
 {
-    public class MultipleTopicConsumer : MultipleTopicConsumer<TestKafkaMessage>
+    public class TestConsumer : Consumer<TestKafkaMessage>
     {
-        private readonly MultipleTopicConsumerOptions _options;
         private readonly TestConsumerBuffer _buffer;
 
-        public MultipleTopicConsumer(
+        public TestConsumer(
             TestConsumerBuffer buffer,
-            IOptions<MultipleTopicConsumerOptions> options,
-            ILogger<MultipleTopicConsumer> logger) : base(logger)
+            IOptions<ConsumerOptions> options,
+            ILogger<TestConsumer> logger) : base(options, logger)
         {
-            _options = options.Value;
             _buffer = buffer;
         }
 
@@ -25,7 +23,5 @@ namespace Forebag.Kafka.IntegrationTests
 
             return Task.CompletedTask;
         }
-
-        protected override MultipleTopicConsumerOptions BuildOptions() => _options;
     }
 }

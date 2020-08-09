@@ -1,6 +1,8 @@
 ﻿using Confluent.Kafka;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
 using System;
 using System.Linq;
 using System.Threading;
@@ -8,42 +10,36 @@ using System.Threading.Tasks;
 
 namespace Forebag.Kafka
 {
-    /// <inheritdoc/>
-    public abstract class BaseConsumer<T> : BackgroundService
+    /// <summary>
+    ///     Wrapper for <see href="Confluent.Kafka.IConsumer"/>.
+    /// </summary>
+    /// <remarks>
+    ///     All messages which is received from topics deserialize from JSON string. 
+    /// </remarks>
+    public abstract class Consumer<T> : BackgroundService
     {
-        private readonly ILogger<BaseConsumer<T>> _logger;
+        private readonly ConsumerOptions _options;
+        private readonly ILogger<Consumer<T>> _logger;
         private IConsumer<string, string>? _consumer;
-        private string[]? _topicsForSubsciption;
-        private IDeserializer<T>? _deserializer;
         private readonly CancellationTokenSource _internalCancellationTokenSource = new CancellationTokenSource();
         private SemaphoreSlim _consumerStopedSignal = new SemaphoreSlim(0);
 
         /// <inheritdoc/>
-        protected BaseConsumer(ILogger<BaseConsumer<T>> logger) => _logger = logger;
+        protected Consumer(IOptions<ConsumerOptions> options, ILogger<Consumer<T>> logger)
+        {
+            _options = options.Value ?? throw new ArgumentNullException(nameof(options));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        }
 
         /// <inheritdoc/>
         public override Task StartAsync(CancellationToken cancellationToken)
         {
-            var parameters = BuildParameters();
-
-            if (parameters.ConsumerConfig == null)
-            {
-                throw new NullReferenceException($"The {nameof(ConsumerConfig)} wasn't initialized.");
-            }
-            else if (parameters.TopicsForRead == null || !parameters.TopicsForRead.Any())
+            if (_options.TopicsForConsume == null || !_options.TopicsForConsume.Any())
             {
                 throw new NullReferenceException($"Collection for subscribable topics wasn't initialized.");
             }
-            else if (parameters.Deserializer == null)
-            {
-                throw new NullReferenceException($"The {nameof(parameters.Deserializer)} wasn't initialized.");
-            }
 
-            _deserializer = parameters.Deserializer;
-
-            _topicsForSubsciption = parameters.TopicsForRead;
-
-            _consumer = new ConsumerBuilder<string, string>(parameters.ConsumerConfig).Build();
+            _consumer = new ConsumerBuilder<string, string>(_options).Build();
 
             _logger.LogInfoStartConsuming(_consumer);
 
@@ -68,9 +64,6 @@ namespace Forebag.Kafka
         }
 
         /// <inheritdoc/>
-        protected abstract (ConsumerConfig? ConsumerConfig, string[]? TopicsForRead, IDeserializer<T> Deserializer) BuildParameters();
-
-        /// <inheritdoc/>
         protected override Task ExecuteAsync(CancellationToken cancellationToken)
         {
             async Task Consume()
@@ -80,33 +73,54 @@ namespace Forebag.Kafka
                         cancellationToken,
                         _internalCancellationTokenSource.Token);
 
-                _consumer!.Subscribe(_topicsForSubsciption!);
+                _consumer!.Subscribe(_options.TopicsForConsume!);
 
                 try
                 {
                     while (!consumerCts.IsCancellationRequested)
                     {
-                        var consumeResult = _consumer.Consume(consumerCts.Token);
+                        ConsumeResult<string, string> consumeResult = null!;
 
                         try
                         {
-                            var deserializedValue = _deserializer!.Deserialize(consumeResult.Value);
+                            consumeResult = _consumer.Consume(consumerCts.Token);
 
-                            _logger.LogConsume(_consumer, consumeResult.Key, consumeResult.Value, consumeResult.TopicPartitionOffset);
+                            var deserializedValue = JsonConvert.DeserializeObject<T>(consumeResult.Message.Value);
 
-                            await ProcessMessage(consumeResult.Key, deserializedValue, consumeResult.TopicPartitionOffset);
+                            _logger.LogConsume(
+                                _consumer,
+                                consumeResult.Message.Key,
+                                consumeResult.Message.Value,
+                                consumeResult.TopicPartitionOffset);
+
+                            await ProcessMessage(
+                                consumeResult.Message.Key,
+                                deserializedValue,
+                                consumeResult.TopicPartitionOffset);
+
+                            Commit(consumeResult.TopicPartitionOffset);
                         }
-                        catch (Exception ex)
+                        catch (ConsumeException ex)
                         {
-                            _logger.LogProcessMessageError(_consumer, consumeResult.Key, consumeResult.Value, consumeResult.TopicPartitionOffset, ex);
+                            if (consumeResult == null)
+                                _logger.LogConsumeError(_consumer, ex);
+                            else
+                                _logger.LogProcessMessageError(
+                                    _consumer,
+                                    consumeResult.Message.Key,
+                                    consumeResult.Message.Value,
+                                    consumeResult.TopicPartitionOffset,
+                                    ex);
                         }
-
-                        Commit(consumeResult.TopicPartitionOffset);
+                        catch (OperationCanceledException ex)
+                        {
+                            _logger.LogWarning(ex, $"The consumer was stopped by cancellation token.");
+                        }
+                        catch (Exception)
+                        {
+                            throw;
+                        }
                     }
-                }
-                catch (OperationCanceledException ex)
-                {
-                    _logger.LogWarning(ex, $"The consumer was stopped by cancellation token.");
                 }
                 catch (Exception ex)
                 {
@@ -114,7 +128,7 @@ namespace Forebag.Kafka
                 }
                 finally
                 {
-                    _consumer.Unsubscribe();
+                    _consumer.Close();
                 }
 
                 _consumerStopedSignal.Release();
