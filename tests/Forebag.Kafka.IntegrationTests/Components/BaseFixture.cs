@@ -41,7 +41,9 @@ namespace Forebag.Kafka.IntegrationTests
                 {
                     configuration
                         .AddJsonFile("appsettings.json")
-                        .AddJsonFile($"appsettings.{hostContext.HostingEnvironment.EnvironmentName}.json", optional: true);
+                        .AddJsonFile(
+                            $"appsettings.{hostContext.HostingEnvironment.EnvironmentName}.json",
+                            optional: true);
 
                     _configuration = configuration.Build();
                 })

@@ -34,7 +34,7 @@ namespace Forebag.Kafka.IntegrationTests
 
                 foreach (var topic in messageBuffer.Topics)
                 {
-                    Assert.Equal(2, messageBuffer.GetTopicByName(topic).Messages.Count);
+                    Assert.Equal(2, messageBuffer.GetTopicByName(topic).Count);
                 }
             }
             catch (Exception ex)

@@ -112,9 +112,9 @@ namespace Forebag.Kafka
                                     consumeResult.TopicPartitionOffset,
                                     ex);
                         }
-                        catch (OperationCanceledException ex)
+                        catch (OperationCanceledException)
                         {
-                            _logger.LogWarning(ex, $"The consumer was stopped by cancellation token.");
+                            _logger.LogWarning($"The consumer was stopped by cancellation token.");
                         }
                         catch (Exception)
                         {

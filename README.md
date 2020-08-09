@@ -1,14 +1,12 @@
 # Forebag.Kafka
 
-Клиент Kafka для .NET
+## How to run tests
 
-### Запуск тестов
+### Local
 
-#### Запуск локально
+1. Run docker with kafka `docker-compose up kafka`.
+2. Run tests `dotnet test -l "console;verbosity=detailed"`.
 
-1. Запустить docker с kafka `docker-compose up kafka`.
-2. Запустить тесты `dotnet test --logger:trx`.
+### Inside docker
 
-#### Запуск в docker
-
-Запустить docker с тестами `docker-compose up --build`.
+Run docker with building of sln `docker-compose up --build`.

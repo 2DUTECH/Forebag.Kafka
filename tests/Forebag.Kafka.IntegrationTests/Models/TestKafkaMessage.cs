@@ -8,7 +8,10 @@ namespace Forebag.Kafka.IntegrationTests
 
         bool IEquatable<TestKafkaMessage>.Equals(TestKafkaMessage? other)
         {
-            return other != null && other.Message != null && this.Message != null && this.Message.Equals(other.Message);
+            return other != null
+                   && other.Message != null
+                   && this.Message != null
+                   && this.Message.Equals(other.Message);
         }
     }
 }
