@@ -75,6 +75,8 @@ namespace Forebag.Kafka
 
                 _consumer!.Subscribe(_options.TopicsForConsume!);
 
+                _logger.LogTrace($"Consumer successful subscribed on topics '{string.Join(", ", _options.TopicsForConsume.Select(v => v))}'");
+
                 try
                 {
                     while (!consumerCts.IsCancellationRequested)
@@ -83,7 +85,13 @@ namespace Forebag.Kafka
 
                         try
                         {
+                            _logger.LogTrace("Consumer start consume.");
+
                             consumeResult = _consumer.Consume(consumerCts.Token);
+
+                            _logger.LogTrace($"Consumer recieved message '{consumeResult}'." +
+                                $"{consumeResult.Message.Timestamp}\n{consumeResult.Message.Key}\n" +
+                                $"{consumeResult.Message.Value}\n{consumeResult.Message.Headers}");
 
                             var deserializedValue = JsonConvert.DeserializeObject<T>(consumeResult.Message.Value);
 
@@ -97,38 +105,33 @@ namespace Forebag.Kafka
                                 consumeResult.Message.Key,
                                 deserializedValue,
                                 consumeResult.TopicPartitionOffset);
-
-                            Commit(consumeResult.TopicPartitionOffset);
                         }
                         catch (ConsumeException ex)
                         {
-                            if (consumeResult == null)
-                                _logger.LogConsumeError(_consumer, ex);
-                            else
-                                _logger.LogProcessMessageError(
-                                    _consumer,
-                                    consumeResult.Message.Key,
-                                    consumeResult.Message.Value,
-                                    consumeResult.TopicPartitionOffset,
-                                    ex);
+                            _logger.LogConsumeError(_consumer, ex);
+                        }
+                        catch (JsonReaderException ex)
+                        {
+                            _logger.LogProcessMessageDeserializeError(_consumer, ex, consumeResult);
                         }
                         catch (OperationCanceledException)
                         {
                             _logger.LogWarning($"The consumer was stopped by cancellation token.");
                         }
-                        catch (Exception)
+                        catch (Exception ex)
                         {
-                            throw;
+                            _logger.LogProcessMessageError(_consumer, ex, consumeResult);
                         }
+
+                        if (consumeResult != null)
+                            Commit(consumeResult.TopicPartitionOffset);
                     }
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogConsumeError(_consumer, ex);
                 }
                 finally
                 {
+                    _logger.LogTrace("Consumer closing.");
                     _consumer.Close();
+                    _logger.LogTrace("Consumer closed.");
                 }
 
                 _consumerStopedSignal.Release();

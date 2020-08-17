@@ -52,17 +52,29 @@ namespace Forebag.Kafka
             Exception ex)
             => logger.LogError($"Commit failed: consumer={consumer.Name}, offset={offset}, message={ex.Message}.");
 
+        public static void LogProcessMessageDeserializeError(
+            this ILogger logger,
+            IClient consumer,
+            Exception ex,
+            ConsumeResult<string, string> consumeResult)
+            => logger.LogError(
+                ex,
+                $"An error occured while deserializing message on ProcessMessage method: " +
+                $"consumer={consumer.Name}, key={consumeResult?.Message?.Key}, " +
+                $"value={consumeResult?.Message?.Value}, offset={consumeResult?.TopicPartitionOffset}, " +
+                $"message={ex.Message}.");
+
         public static void LogProcessMessageError(
             this ILogger logger,
             IClient consumer,
-            string key,
-            string value,
-            TopicPartitionOffset offset,
-            Exception ex)
+            Exception ex,
+            ConsumeResult<string, string> consumeResult)
             => logger.LogError(
                 ex,
                 $"An error occured while executing the ProcessMessage method: " +
-                $"consumer={consumer.Name}, key={key}, value={value}, offset={offset}, message={ex.Message}.");
+                $"consumer={consumer.Name}, key={consumeResult?.Message?.Key}, " +
+                $"value={consumeResult?.Message?.Value}, offset={consumeResult?.TopicPartitionOffset}, " +
+                $"message={ex.Message}.");
 
         public static void LogConsumeError(this ILogger logger, IClient consumer, Exception ex)
             => logger.LogError(
