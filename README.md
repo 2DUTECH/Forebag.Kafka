@@ -11,4 +11,4 @@
 
 #### Запуск в docker
 
-Запустить docker с тестами `docker-compose up --build`.
+Запустить docker с тестами `docker-compose up --build .`
